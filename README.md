@@ -22,12 +22,12 @@ sudo apt-get install javacc
 
 1. Start Eclipse
 1. Help | Install New Software...
-  1. Work with: http://eclipse-javacc.sourceforge.net/
-  1. Hit Enter
-  1. Select "JavaCC Eclipse Plug-in"
-  1. Press Next, Next, Finish
-  1. Install anyway
-  1. Restart Now
+   1. Work with: http://eclipse-javacc.sourceforge.net/
+   1. Hit Enter
+   1. Select "JavaCC Eclipse Plug-in"
+   1. Press Next, Next, Finish
+   1. Install anyway
+   1. Restart Now
 
 ## Praktikum 1
 
