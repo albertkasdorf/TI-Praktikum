@@ -1,0 +1,12 @@
+# http://www.bottlecaps.de/rr/ui
+
+IDENT ::= ([a-z] | [A-Z])+ ([0-9])*
+program ::= program_main program_var statement
+program_main ::= IDENT "(" var_in ";" var_out ")" ";"
+program_var ::= "var" "(" var_help ")" ";"
+var_in ::= "in" (IDENT ("," IDENT)*)?
+var_out ::= "out" IDENT
+var_help ::= (IDENT ("," IDENT)*)?
+statement ::= (assign_statement | while_statement) (";" statement)?
+assign_statement ::= IDENT "=" ( "0" | (IDENT "+" "1"))
+while_statement ::= "while" IDENT "!=" IDENT "do" "begin" statement "end"
