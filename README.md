@@ -2,6 +2,8 @@
 
 ## Praktikum 1
 
+[Aufgabenstellung](p1/Aufgabenstellung.pdf)
+
 Ziel des ersten Praktikumversuches ist die Entwicklung eines Parsers für WHILE0-Programme mittels JavaCC.
 
 Wie in Übungsaufgabe 13 sind WHILE0-Programme WHILE-Programme (Definition siehe Skript), in denen Wertzuweisungen auf solche der Form `V1 = V2 + 1` und `V1 = 0` beschränkt sind und weitere Anweisungen nur durch Sequenz `α1; α2` und Wiederholungsanweisungen der Form `while V1 != V2 do begin α end` konstruiert sind.
