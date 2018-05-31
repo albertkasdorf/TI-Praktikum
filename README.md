@@ -11,7 +11,7 @@ Geben Sie zunächst ein Syntaxdiagramm zur Beschreibung der Syntax von WHILE0-Pr
 
 Lösung:
 * [while0parser.ebnf](p1/diagram/while0parser.ebnf)
-* [while0parser.xhtml](p1/diagram/while0parser.xhtml)
+* [while0parser.xhtml](https://cdn.rawgit.com/albertkasdorf/TI-Praktikum/170038b9/p1/diagram/while0parser.xhtml)
 
 Erstellen Sie eine .JJ-Datei, die den Scanner (Tokendefinition als Reguläre Ausdrücke) und Parser (Typ 2-Grammatik in javaCC-Notation) enthält.
 
