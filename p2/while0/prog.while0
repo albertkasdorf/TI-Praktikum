@@ -1,0 +1,44 @@
+PROG(in X1; out Y);
+var(H1, H2, H3, H4, H5, H6);
+H5 = H5 + 1;
+while H2 != X1 do begin
+	H2 = H2 + 1;
+	while H3 != X1 do begin
+		H3 = H3 + 1;
+		H1 = H1 + 1
+	end;
+	H3 = 0
+end;
+Y = 0;
+Y = Y + 1;
+while H1 != H4 do begin
+	while H1 != H5 do begin
+		H6 = 0;
+		while H6 != Y do begin
+			H6 = H6 + 1
+		end;
+		Y = 0;
+		H2 = 0;
+		while H2 != H1 do begin
+			H2 = H2 + 1;
+			H3 = 0;
+			while H3 != H6 do begin
+				H3 = H3 + 1;
+				Y = Y + 1
+			end
+		end;
+		H2 = 0;
+		H3 = 0;
+		while H3 != H1 do begin
+			H3 = H3 + 1
+		end;
+		while H2 != H3 do begin
+			H1 = 0;
+			while H1 != H2 do begin
+				H1 = H1 + 1
+			end;
+			H2 = H2 + 1
+		end
+	end;
+	H1 = 0
+end

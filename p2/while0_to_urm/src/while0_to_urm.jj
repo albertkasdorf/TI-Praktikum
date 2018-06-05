@@ -1,0 +1,92 @@
+PARSER_BEGIN(while0_to_urm)
+
+import java.io.*;
+
+public class while0_to_urm
+{
+	/*
+	http://www.fh-wedel.de/~si/seminare/ws07/Ausarbeitung/04.javacc/praxis.html
+	http://www.engr.mun.ca/~theo/JavaCC-Tutorial/javacc-tutorial.pdf
+	*/
+	public static void main(String args[])
+	{
+		try
+		{
+			String file_name = "../while0/simple.while0";
+			FileInputStream fis = new FileInputStream(file_name);
+			while0_to_urm translator = new while0_to_urm(fis);
+			translator.run();
+
+			System.out.println("WHILE0 Programm ok.");
+		}
+		catch (Exception e)
+		{
+			System.out.println("WHILE0 Programm fehlerhaft.");
+			System.out.println(e.toString());
+		}
+	}
+}
+
+PARSER_END(while0_to_urm)
+
+TOKEN :
+{
+	< IN: "in" >
+|	< OUT: "out">
+|	< VAR: "var">
+|	< ASSIGN: "=" >
+|	< PLUS: "+" >
+|	< ZERO: "0" >
+|	< ONE: "1" >
+|	< NE: "!=" >
+|	< WHILE: "while" >
+|	< DO: "do" >
+|	< BEGIN: "begin" >
+|	< END: "end" >
+|	< SEMICOLON: ";" >
+|	< COMMA: "," >
+|	< LPAREN: "(" >
+|	< RPAREN: ")" >
+|	< IDENT: (["a"-"z","A"-"Z"] (["0"-"9"])?)+ >
+}
+SKIP :
+{
+	" " | "\t" | "\n" | "\r" | "\r\n"
+}
+void run() :
+{}
+{
+	<IDENT> <LPAREN> var_in() <SEMICOLON> var_out() <RPAREN> <SEMICOLON>
+	<VAR> <LPAREN> var_help() <RPAREN> <SEMICOLON>
+	statement()
+}
+void var_in() :
+{}
+{
+	<IN> <IDENT> (<COMMA> <IDENT>)*
+}
+void var_out() :
+{}
+{
+	<OUT> <IDENT>
+}
+void var_help() :
+{}
+{
+	(<IDENT> (<COMMA> <IDENT>)*)*
+}
+void statement() :
+{}
+{
+	(assign_statement() | while_statement()) (<SEMICOLON> statement())?
+}
+void assign_statement() :
+{}
+{
+	<IDENT> <ASSIGN> (<ZERO> | <IDENT> <PLUS> <ONE>)
+}
+void while_statement() :
+{}
+{
+	<WHILE> <IDENT> <NE> <IDENT> <DO> <BEGIN> statement() <END>
+}

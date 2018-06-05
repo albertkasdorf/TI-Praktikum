@@ -1,0 +1,10 @@
+TEST(in X1, X2, X3; out Y);
+var(H1, H2, H3, H4);
+X1 = 0;
+X2 = 0;
+X1 = X1 + 1;
+X2 = X2 + 1;
+while X1 != X2 do begin
+	X2 = X1 + 1;
+	X2 = X2 + 1
+end
