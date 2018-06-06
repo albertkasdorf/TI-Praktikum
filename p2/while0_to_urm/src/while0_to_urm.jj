@@ -37,20 +37,86 @@ public class while0_to_urm
 		}
 	}
 
+	//
+	//
+	//
 	private String program_name;
+
+	//
+	// Mapping between the token names and the register.
+	//
 	private HashMap<String, String > ident_lookup = new HashMap<String, String >();
+
+	//
+	// Number of the next free register. R1 is reserved for the output.
+	//
 	private int next_register_number = 2;
 
-	// Store index in program array and jump mark
+	//
+	// Store the index in the program array and the jump mark.
+	//
 	private Stack<AbstractMap.SimpleEntry<Integer, Integer > > while_replace = new Stack<AbstractMap.SimpleEntry<Integer, Integer > >();
 
+	//
 	// URM Program line by line
+	//
 	private ArrayList<String > program = new ArrayList<String >();
 
 
+	//
+	// Create a "dynamic" mapping between an token and an register.
+	//
+	private void add_ident(Token token) throws ParseException
+	{
+		String name = token.image;
+
+		if(ident_lookup.containsKey(name))
+			throw new ParseException("Multiple in/help variables not allowed. Name=" + name);
+
+		ident_lookup.put(name, "R" + Integer.toString(next_register_number));
+		next_register_number++;
+	}
+
+	//
+	// Create a "static" mapping between an out token and an register.
+	//
+	private void add_out_ident(Token token) throws ParseException
+	{
+		String name = token.image;
+
+		if(ident_lookup.containsKey(name))
+			throw new ParseException("Multiple out variables not allowed.");
+
+		ident_lookup.put(name, "R1");
+	}
+
+	//
+	// Return the register that maps to this token_name.
+	//
+	private String get_ident_register(String name) throws ParseException
+	{
+		if(!ident_lookup.containsKey(name))
+			throw new ParseException("Variable " + name + " not defined.");
+
+		return ident_lookup.get(name);
+	}
+
+	//
+	// Return a unused register. 
+	//
+	private String get_new_register()
+	{
+		return String.format("R%d", next_register_number++);
+	}
+
+	//
+	// Create a comment in the program with the info about the mapping
+	// between the token names and the register.
+	// 
 	private void create_var_reg_mapping()
 	{
 		StringBuilder sb = new StringBuilder();
+		
 		sb.append("; ");
 		for(Map.Entry<String, String > entry : ident_lookup.entrySet())
 		{
@@ -59,41 +125,15 @@ public class while0_to_urm
 		program.add(sb.toString());
 	}
 
-	private void add_ident(String name) throws ParseException
-	{
-		if(ident_lookup.containsKey(name))
-			throw new ParseException("Multiple in/help variables not allowed. Name=" + name);
-			
-		ident_lookup.put(name, "R" + Integer.toString(next_register_number));
-		next_register_number++;
-	}
-
-	private void add_out_ident(String name) throws ParseException
-	{
-		if(ident_lookup.containsKey(name))
-			throw new ParseException("Multiple out variables not allowed.");
-
-		ident_lookup.put(name, "R1");
-	}
-
-	private String get_ident(String name) throws ParseException
-	{
-		if(!ident_lookup.containsKey(name))
-			throw new ParseException("Variable " + name + " not defined.");
-
-		return ident_lookup.get(name);
-	}
-
-	private String get_new_register()
-	{
-		return String.format("R%d", next_register_number++);
-	}
-
+	//
+	// Create the assignment statement. (X1 = 0)
+	//
 	private void create_assignment(Token token) throws ParseException
 	{
-		String register = get_ident(token.image);
-		program.add("; " + token.image + " = 0");
-		program.add(register + " = 0");
+		String register = get_ident_register(token.image);
+
+		program.add(String.format("; %s = 0", token.image));
+		program.add(String.format("%s = 0", register));
 	}
 
 	/*
@@ -108,8 +148,8 @@ public class while0_to_urm
 	{
 		program.add("; " + lToken.image + " = " + rToken.image + " + 1");
 
-		String l_reg = get_ident(lToken.image);
-		String r_reg = get_ident(rToken.image);
+		String l_reg = get_ident_register(lToken.image);
+		String r_reg = get_ident_register(rToken.image);
 		String h_reg = get_new_register();
 
 		create_copy(h_reg, r_reg);
@@ -138,8 +178,8 @@ public class while0_to_urm
 		String r_copy_reg = get_new_register();
 
 		int copy_base_line = get_next_line_number();
-		create_copy(l_copy_reg, get_ident(lToken.image));
-		create_copy(r_copy_reg, get_ident(rToken.image));
+		create_copy(l_copy_reg, get_ident_register(lToken.image));
+		create_copy(r_copy_reg, get_ident_register(rToken.image));
 
 		int compare_l_copy_reg = get_next_line_number();
 		program.add(String.format("if %s == 0 goto %s", l_copy_reg, compare_l_copy_reg + 2));
@@ -298,21 +338,21 @@ void var_in() :
 	Token t;
 }
 {
-	<IN> (t = <IDENT> { add_ident(t.image); } (<COMMA> t = <IDENT> { add_ident(t.image); })*)*
+	<IN> (t = <IDENT> { add_ident(t); } (<COMMA> t = <IDENT> { add_ident(t); })*)*
 }
 void var_out() :
 {
 	Token t;
 }
 {
-	<OUT> t = <IDENT> { add_out_ident(t.image); }
+	<OUT> t = <IDENT> { add_out_ident(t); }
 }
 void var_help() :
 {
 	Token t;
 }
 {
-	(t = <IDENT> { add_ident(t.image); } (<COMMA> t = <IDENT> { add_ident(t.image); })*)*
+	(t = <IDENT> { add_ident(t); } (<COMMA> t = <IDENT> { add_ident(t); })*)*
 }
 void statement() :
 {}
