@@ -1,6 +1,14 @@
+options
+{
+	STATIC = false;
+}
 PARSER_BEGIN(while0_to_urm)
 
 import java.io.*;
+import java.util.*;
+import java.lang.*;
+import java.nio.file.*;
+import java.nio.charset.*;
 
 public class while0_to_urm
 {
@@ -12,18 +20,240 @@ public class while0_to_urm
 	{
 		try
 		{
-			String file_name = "../while0/simple.while0";
+			String file_name = "../while0/mult.while0";
 			FileInputStream fis = new FileInputStream(file_name);
 			while0_to_urm translator = new while0_to_urm(fis);
 			translator.run();
 
 			System.out.println("WHILE0 Programm ok.");
+
+			translator.print_urm();
+			translator.write_urm();
 		}
 		catch (Exception e)
 		{
 			System.out.println("WHILE0 Programm fehlerhaft.");
 			System.out.println(e.toString());
 		}
+	}
+
+	private String program_name;
+	private HashMap<String, String > ident_lookup = new HashMap<String, String >();
+	private int next_register_number = 2;
+
+	// Store index in program array and jump mark
+	private Stack<AbstractMap.SimpleEntry<Integer, Integer > > while_replace = new Stack<AbstractMap.SimpleEntry<Integer, Integer > >();
+
+	// URM Program line by line
+	private ArrayList<String > program = new ArrayList<String >();
+
+
+	private void create_var_reg_mapping()
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append("; ");
+		for(Map.Entry<String, String > entry : ident_lookup.entrySet())
+		{
+			sb.append(entry.getKey() + " -> " + entry.getValue() + ", ");
+		}
+		program.add(sb.toString());
+	}
+
+	private void add_ident(String name) throws ParseException
+	{
+		if(ident_lookup.containsKey(name))
+			throw new ParseException("Multiple in/help variables not allowed. Name=" + name);
+			
+		ident_lookup.put(name, "R" + Integer.toString(next_register_number));
+		next_register_number++;
+	}
+
+	private void add_out_ident(String name) throws ParseException
+	{
+		if(ident_lookup.containsKey(name))
+			throw new ParseException("Multiple out variables not allowed.");
+
+		ident_lookup.put(name, "R1");
+	}
+
+	private String get_ident(String name) throws ParseException
+	{
+		if(!ident_lookup.containsKey(name))
+			throw new ParseException("Variable " + name + " not defined.");
+
+		return ident_lookup.get(name);
+	}
+
+	private String get_new_register()
+	{
+		return String.format("R%d", next_register_number++);
+	}
+
+	private void create_assignment(Token token) throws ParseException
+	{
+		String register = get_ident(token.image);
+		program.add("; " + token.image + " = 0");
+		program.add(register + " = 0");
+	}
+
+	/*
+		add(r1, r2) <=> r1 = r2 + 1
+		add(r1, r1) <=> r1 = r1 + 1
+		
+		copy(r3 <- r2)
+		r3++
+		copy(r1 <- r3)
+	*/
+	private void create_increment(Token lToken, Token rToken) throws ParseException
+	{
+		program.add("; " + lToken.image + " = " + rToken.image + " + 1");
+
+		String l_reg = get_ident(lToken.image);
+		String r_reg = get_ident(rToken.image);
+		String h_reg = get_new_register();
+
+		create_copy(h_reg, r_reg);
+		program.add(String.format("%s++", h_reg));
+		create_copy(l_reg, h_reg);
+	}
+
+	/*
+		while lToken != rToken do begin
+		COPY(_R1, lToken)					; $copy_lToken$
+		COPY(_R2, rToken)
+		if _R1 == 0 goto $check_left_r2$	; $compare_r1$
+		goto $check_right_r2$
+		if _R2 == 0 goto $end$				; $check_left_r2$
+		goto $exe$
+		if _R2 == 0 goto $exe$				; $check_right_r2$
+		_R1--
+		_R2--
+		goto $compare_r1$
+		...									; $exe$
+		goto $copy_lToken$
+	*/
+	private void create_while_begin(Token lToken, Token rToken) throws ParseException
+	{
+		String l_copy_reg = get_new_register();
+		String r_copy_reg = get_new_register();
+
+		int copy_base_line = get_next_line_number();
+		create_copy(l_copy_reg, get_ident(lToken.image));
+		create_copy(r_copy_reg, get_ident(rToken.image));
+
+		int compare_l_copy_reg = get_next_line_number();
+		program.add(String.format("if %s == 0 goto %s", l_copy_reg, compare_l_copy_reg + 2));
+		program.add(String.format("goto %s", compare_l_copy_reg + 4));
+
+		while_replace.push(new AbstractMap.SimpleEntry<Integer, Integer >(program.size() , -1));
+		program.add(String.format("if %s == 0 goto <??>", r_copy_reg));
+		program.add(String.format("goto %s", compare_l_copy_reg + 8));
+		program.add(String.format("if %s == 0 goto %s", r_copy_reg, compare_l_copy_reg + 8));
+		program.add(String.format("%s--", l_copy_reg));
+		program.add(String.format("%s--", r_copy_reg));
+		program.add(String.format("goto %d", compare_l_copy_reg));
+
+		while_replace.push(new AbstractMap.SimpleEntry<Integer, Integer >(-1 , copy_base_line));
+	}
+
+	private void create_while_end() throws ParseException
+	{
+		AbstractMap.SimpleEntry<Integer, Integer> jump_to_copy = while_replace.pop();
+		AbstractMap.SimpleEntry<Integer, Integer> jump_to_end = while_replace.pop();
+
+		program.add(String.format("goto %d", jump_to_copy.getValue()));
+
+		int program_index = jump_to_end.getKey();
+		String program_line = program.get(program_index);
+		program_line = program_line.replace("<??>", String.format("%d", get_next_line_number()));
+		program.set(program_index, program_line);
+	}
+
+	/*
+		y soll nach x kopiert werden und y soll beibehalten werden.
+		COPY(x,y);
+		loc(z);
+		1: x = 0;
+		2: if y == 0 goto 6;
+		3: y--;
+		4: z++;
+		5: goto 2;
+		6: if z == 0 goto 11;
+		7: z--;
+		8: x++;
+		9: y++;
+		10: goto 6;
+		11: ;
+		
+		copy(r1 <- r2)
+		copy(r1 <- r1)
+		
+		_r2 = 0
+		
+		if r2 == 0 goto $r1_set_zero$		; $if_r2_equal_zero$
+		_r2++
+		r2--
+		goto $if_r2_equal_zero$
+		
+		r1 = 0								; $r1_set_zero$
+		r2 = 0
+		
+		if _r2 == 0 goto $end$				; $if__r2_equal_zero$
+		r1++
+		r2++
+		_r2--
+		goto $if__r2_equal_zero$
+	*/
+	private void create_copy(String xReg, String yReg) throws ParseException
+	{
+		String zReg = get_new_register();
+
+		// Nummer der ersten Programmzeile von copy
+		int base_line = get_next_line_number();
+
+
+		program.add(String.format("%s = 0", xReg));
+		program.add(String.format("if %s == 0 goto %d", yReg, base_line + 5));
+		program.add(String.format("%s--", yReg));
+		program.add(String.format("%s++", zReg));
+		program.add(String.format("goto %d", base_line + 1));
+		program.add(String.format("if %s == 0 goto %d", zReg, base_line + 10));
+		program.add(String.format("%s--", zReg));
+		program.add(String.format("%s++", xReg));
+		program.add(String.format("%s++", yReg));
+		program.add(String.format("goto %d", base_line + 5));
+	}
+
+	private int get_next_line_number()
+	{
+		int line_number = 1;
+		for(String line : program)
+		{
+			if(line.startsWith(";"))
+				continue;
+			else
+				line_number++;
+		}
+		return line_number;
+	}
+
+	public void print_urm()
+	{
+		int line_number = 1;
+		for(String line : program)
+		{
+			if(line.startsWith(";"))
+				System.out.println(String.format("--: %s", line));
+			else
+				System.out.println(String.format("%02d: %s", line_number++, line));
+		}
+	}
+
+	public void write_urm() throws IOException
+	{
+		OpenOption[] options = new OpenOption[] { StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE };
+		Path file = Paths.get("..", "urm", program_name + ".urm");
+		Files.write(file, program, Charset.forName("UTF-8"), options);
 	}
 }
 
@@ -54,26 +284,35 @@ SKIP :
 	" " | "\t" | "\n" | "\r" | "\r\n"
 }
 void run() :
-{}
 {
-	<IDENT> <LPAREN> var_in() <SEMICOLON> var_out() <RPAREN> <SEMICOLON>
+	Token t;
+}
+{
+	t = <IDENT> { program_name = t.image; } <LPAREN> var_in() <SEMICOLON> var_out() <RPAREN> <SEMICOLON>
 	<VAR> <LPAREN> var_help() <RPAREN> <SEMICOLON>
+	{ create_var_reg_mapping(); }
 	statement()
 }
 void var_in() :
-{}
 {
-	<IN> <IDENT> (<COMMA> <IDENT>)*
+	Token t;
+}
+{
+	<IN> (t = <IDENT> { add_ident(t.image); } (<COMMA> t = <IDENT> { add_ident(t.image); })*)*
 }
 void var_out() :
-{}
 {
-	<OUT> <IDENT>
+	Token t;
+}
+{
+	<OUT> t = <IDENT> { add_out_ident(t.image); }
 }
 void var_help() :
-{}
 {
-	(<IDENT> (<COMMA> <IDENT>)*)*
+	Token t;
+}
+{
+	(t = <IDENT> { add_ident(t.image); } (<COMMA> t = <IDENT> { add_ident(t.image); })*)*
 }
 void statement() :
 {}
@@ -81,12 +320,24 @@ void statement() :
 	(assign_statement() | while_statement()) (<SEMICOLON> statement())?
 }
 void assign_statement() :
-{}
 {
-	<IDENT> <ASSIGN> (<ZERO> | <IDENT> <PLUS> <ONE>)
+	Token lToken, rToken;
+}
+{
+	lToken = <IDENT> <ASSIGN>
+	(
+		<ZERO> { create_assignment(lToken); }
+		|
+		rToken = <IDENT> <PLUS> <ONE> { create_increment(lToken, rToken); }
+	)
 }
 void while_statement() :
-{}
 {
-	<WHILE> <IDENT> <NE> <IDENT> <DO> <BEGIN> statement() <END>
+	Token lToken, rToken;
+}
+{
+	<WHILE> lToken = <IDENT> <NE> rToken = <IDENT> <DO>
+	<BEGIN> { create_while_begin(lToken, rToken); }
+	statement()
+	<END> { create_while_end(); }
 }

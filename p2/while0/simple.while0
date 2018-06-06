@@ -1,4 +1,3 @@
 SIMPLE(in X1, X2; out Y);
 var();
-X1 = 0;
-Y = 0
+X1 = X1 + 1

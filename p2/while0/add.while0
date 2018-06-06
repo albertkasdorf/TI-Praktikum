@@ -1,0 +1,14 @@
+ADD(in X1, X2; out Y);
+var(H1);
+
+while H1 != X1 do begin
+	Y = Y + 1;
+	H1 = H1 + 1
+end;
+
+H1 = 0;
+
+while H1 != X2 do begin
+	Y = Y + 1;
+	H1 = H1 + 1
+end
