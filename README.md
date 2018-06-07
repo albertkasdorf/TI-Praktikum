@@ -1,4 +1,4 @@
-# TI-Praktikum
+# TI-Praktikum SoSe18
 
 ## Praktikum 1
 
