@@ -37,6 +37,9 @@ Lösung:
 
 
 ## Praktikum 2
+
+[Aufgabenstellung](p2/Aufgabenstellung.pdf)
+
 In diesem Versuch sollen Sie aufbauend auf Versuch 1 einen vollständigen Compiler für "WHILE0-" nach "URM-Quellcode" entwickeln.
 
 Dieser URM-Quellcode soll anschließend im URM Simulator korrekt ausführbar sein. Der URM Simulator geht dabei davon aus, dass der (Eingabe-)URM-Quellcode keine Zeilennummern enthält (diese werden implizit vom URM Simulator gesetzt) und dass nur eine endliche, nicht-leere Folge von Befehlen folgt (Programmspeicher).
