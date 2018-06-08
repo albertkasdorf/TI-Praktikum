@@ -20,7 +20,7 @@ public class while0_to_urm
 	{
 		try
 		{
-			String file_name = "../while0/mult.while0";
+			String file_name = "../while0/add.while0";
 			FileInputStream fis = new FileInputStream(file_name);
 			while0_to_urm translator = new while0_to_urm(fis);
 			translator.run();
@@ -214,7 +214,8 @@ public class while0_to_urm
 	}
 
 	/*
-		y soll nach x kopiert werden und y soll beibehalten werden.
+		Copy the value from yReg to xReg. xReg and yReg must be different register.
+
 		COPY(x,y);
 		loc(z);
 		1: x = 0;
@@ -228,25 +229,6 @@ public class while0_to_urm
 		9: y++;
 		10: goto 6;
 		11: ;
-		
-		copy(r1 <- r2)
-		copy(r1 <- r1)
-		
-		_r2 = 0
-		
-		if r2 == 0 goto $r1_set_zero$		; $if_r2_equal_zero$
-		_r2++
-		r2--
-		goto $if_r2_equal_zero$
-		
-		r1 = 0								; $r1_set_zero$
-		r2 = 0
-		
-		if _r2 == 0 goto $end$				; $if__r2_equal_zero$
-		r1++
-		r2++
-		_r2--
-		goto $if__r2_equal_zero$
 	*/
 	private void create_copy(String xReg, String yReg) throws ParseException
 	{
@@ -255,19 +237,22 @@ public class while0_to_urm
 		// Nummer der ersten Programmzeile von copy
 		int base_line = get_next_line_number();
 
-
 		program.add(String.format("%s = 0", xReg));
 		program.add(String.format("if %s == 0 goto %d", yReg, base_line + 5));
 		program.add(String.format("%s--", yReg));
 		program.add(String.format("%s++", zReg));
 		program.add(String.format("goto %d", base_line + 1));
-		program.add(String.format("if %s == 0 goto %d", zReg, base_line + 10));
+		program.add(String.format("if %s == 0 goto %d", zReg, base_line + 10)); // base_line + 5
 		program.add(String.format("%s--", zReg));
 		program.add(String.format("%s++", xReg));
 		program.add(String.format("%s++", yReg));
 		program.add(String.format("goto %d", base_line + 5));
 	}
 
+	//
+	// Return the line number in the output file.
+	// Line number and program index can be different!
+	//
 	private int get_next_line_number()
 	{
 		int line_number = 1;
@@ -281,6 +266,9 @@ public class while0_to_urm
 		return line_number;
 	}
 
+	//
+	// Print the generated urm program to the console.
+	//
 	public void print_urm()
 	{
 		int line_number = 1;
@@ -293,6 +281,9 @@ public class while0_to_urm
 		}
 	}
 
+	//
+	// Writes the generated urm program to a file.
+	//
 	public void write_urm() throws IOException
 	{
 		OpenOption[] options = new OpenOption[] { StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE };

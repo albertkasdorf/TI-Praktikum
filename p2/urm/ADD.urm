@@ -1,0 +1,149 @@
+; X1 -> R2, Y -> R1, H1 -> R4, X2 -> R3, 
+R5 = 0
+if R4 == 0 goto 6
+R4--
+R7++
+goto 2
+if R7 == 0 goto 11
+R7--
+R5++
+R4++
+goto 6
+R6 = 0
+if R2 == 0 goto 16
+R2--
+R8++
+goto 12
+if R8 == 0 goto 21
+R8--
+R6++
+R2++
+goto 16
+if R5 == 0 goto 23
+goto 25
+if R6 == 0 goto 72
+goto 29
+if R6 == 0 goto 29
+R5--
+R6--
+goto 21
+; Y = Y + 1
+R9 = 0
+if R1 == 0 goto 34
+R1--
+R10++
+goto 30
+if R10 == 0 goto 39
+R10--
+R9++
+R1++
+goto 34
+R9++
+R1 = 0
+if R9 == 0 goto 45
+R9--
+R11++
+goto 41
+if R11 == 0 goto 50
+R11--
+R1++
+R9++
+goto 45
+; H1 = H1 + 1
+R12 = 0
+if R4 == 0 goto 55
+R4--
+R13++
+goto 51
+if R13 == 0 goto 60
+R13--
+R12++
+R4++
+goto 55
+R12++
+R4 = 0
+if R12 == 0 goto 66
+R12--
+R14++
+goto 62
+if R14 == 0 goto 71
+R14--
+R4++
+R12++
+goto 66
+goto 1
+; H1 = 0
+R4 = 0
+R15 = 0
+if R4 == 0 goto 78
+R4--
+R17++
+goto 74
+if R17 == 0 goto 83
+R17--
+R15++
+R4++
+goto 78
+R16 = 0
+if R3 == 0 goto 88
+R3--
+R18++
+goto 84
+if R18 == 0 goto 93
+R18--
+R16++
+R3++
+goto 88
+if R15 == 0 goto 95
+goto 97
+if R16 == 0 goto 144
+goto 101
+if R16 == 0 goto 101
+R15--
+R16--
+goto 93
+; Y = Y + 1
+R19 = 0
+if R1 == 0 goto 106
+R1--
+R20++
+goto 102
+if R20 == 0 goto 111
+R20--
+R19++
+R1++
+goto 106
+R19++
+R1 = 0
+if R19 == 0 goto 117
+R19--
+R21++
+goto 113
+if R21 == 0 goto 122
+R21--
+R1++
+R19++
+goto 117
+; H1 = H1 + 1
+R22 = 0
+if R4 == 0 goto 127
+R4--
+R23++
+goto 123
+if R23 == 0 goto 132
+R23--
+R22++
+R4++
+goto 127
+R22++
+R4 = 0
+if R22 == 0 goto 138
+R22--
+R24++
+goto 134
+if R24 == 0 goto 143
+R24--
+R4++
+R22++
+goto 138
+goto 73
