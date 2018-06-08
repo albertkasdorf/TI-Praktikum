@@ -38,7 +38,7 @@ public class while0_to_urm
 	}
 
 	//
-	//
+	// Name of the program.
 	//
 	private String program_name;
 
@@ -55,7 +55,7 @@ public class while0_to_urm
 	//
 	// Store the index in the program array and the jump mark.
 	//
-	private Stack<AbstractMap.SimpleEntry<Integer, Integer > > while_replace = new Stack<AbstractMap.SimpleEntry<Integer, Integer > >();
+	private Stack<Integer > while_replace = new Stack<Integer >();
 
 	//
 	// URM Program line by line
@@ -159,6 +159,7 @@ public class while0_to_urm
 
 	/*
 		while lToken != rToken do begin
+		
 		COPY(_R1, lToken)					; $copy_lToken$
 		COPY(_R2, rToken)
 		if _R1 == 0 goto $check_left_r2$	; $compare_r1$
@@ -185,7 +186,8 @@ public class while0_to_urm
 		program.add(String.format("if %s == 0 goto %s", l_copy_reg, compare_l_copy_reg + 2));
 		program.add(String.format("goto %s", compare_l_copy_reg + 4));
 
-		while_replace.push(new AbstractMap.SimpleEntry<Integer, Integer >(program.size() , -1));
+		// We only need the index of the program to replace the <?? > with the next command after the while.
+		while_replace.push(program.size());
 		program.add(String.format("if %s == 0 goto <??>", r_copy_reg));
 		program.add(String.format("goto %s", compare_l_copy_reg + 8));
 		program.add(String.format("if %s == 0 goto %s", r_copy_reg, compare_l_copy_reg + 8));
@@ -193,17 +195,19 @@ public class while0_to_urm
 		program.add(String.format("%s--", r_copy_reg));
 		program.add(String.format("goto %d", compare_l_copy_reg));
 
-		while_replace.push(new AbstractMap.SimpleEntry<Integer, Integer >(-1 , copy_base_line));
+		// Line number of the first copy statement
+		while_replace.push(copy_base_line);
 	}
 
 	private void create_while_end() throws ParseException
 	{
-		AbstractMap.SimpleEntry<Integer, Integer> jump_to_copy = while_replace.pop();
-		AbstractMap.SimpleEntry<Integer, Integer> jump_to_end = while_replace.pop();
+		Integer jump_to_copy = while_replace.pop();
+		Integer jump_to_end = while_replace.pop();
 
-		program.add(String.format("goto %d", jump_to_copy.getValue()));
+		program.add(String.format("goto %d", jump_to_copy));
 
-		int program_index = jump_to_end.getKey();
+		// Replace the <??> mark with the end of the while-loop
+		int program_index = jump_to_end;
 		String program_line = program.get(program_index);
 		program_line = program_line.replace("<??>", String.format("%d", get_next_line_number()));
 		program.set(program_index, program_line);
